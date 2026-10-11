@@ -36,7 +36,7 @@ jobs:
             -project "apps/ios/Orange Cloud/Orange Cloud.xcodeproj" \
             -scheme "Orange Cloud" \
             -configuration Release \
-            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             -xcconfig /tmp/unlock.xcconfig \
             CODE_SIGNING_ALLOWED=NO \
