@@ -32,6 +32,15 @@ struct ZoneDetailView: View {
     @State private var showInvalidateDone = false
     @State private var showActionDenied = false
     @State private var deniedScopeHint = ""
+
+    /// 错误弹窗的 isPresented 绑定：抽出为独立计算属性，
+    /// 避免超大 ViewBuilder 链触发编译器"无法在合理时间内完成类型检查"
+    private var errorAlertBinding: Binding<Bool> {
+        Binding(
+            get: { actionsViewModel.error != nil },
+            set: { if !$0 { actionsViewModel.error = nil } }
+        )
+    }
     /// 开关类操作先收口到这里，confirmationDialog 确认后才调 API
     @State private var pendingAction: PendingZoneAction?
 
@@ -687,10 +696,7 @@ struct ZoneDetailView: View {
         } message: {
             Text("当前授权未包含此操作所需权限（\(deniedScopeHint)）。点「一键重授权」补齐，无需退出登录。")
         }
-        .alert("操作失败", isPresented: .init(
-            get: { actionsViewModel.error != nil },
-            set: { if !$0 { actionsViewModel.error = nil } }
-        )) {
+        .alert("操作失败", isPresented: errorAlertBinding) {
             apiErrorDocButton(for: actionsViewModel.error)
             Button("好", role: .cancel) {}
         } message: {
