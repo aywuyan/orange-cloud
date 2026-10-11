@@ -947,22 +947,34 @@ struct ZoneDetailView: View {
     /// 详情页工具栏：抽出为独立属性，避免超大 body 触发编译器类型检查超时
     /// 注意：ToolbarItem 是 ToolbarContent 而非 View，这里不能加 @ViewBuilder
     private var detailToolbar: some ToolbarContent {
-                ToolbarItem(placement: .topBarTrailing) {
-                    // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
-                    // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
-                    Button(isPinned ? String(localized: "取消固定") : String(localized: "固定到首页"),
-                           systemImage: isPinned ? "pin.fill" : "pin") {
-                        let nowPinned = pinnedStore.toggle(
-                            PinnedResource(type: .zone, resourceId: zone.id),
-                            accountId: zone.accountId
-                        )
-                        withAnimation(.smooth) {
-                            zone.pinned = nowPinned
-                        }
-                        SafeCache.perform("pin 状态保存") { try modelContext.save() }
-                    }
-                    .contentTransition(.symbolEffect(.replace))
-                }
+        ToolbarItem(placement: .topBarTrailing) {
+            // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
+            // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
+            Button(pinToggleTitle, systemImage: pinToggleImage, action: togglePin)
+                .contentTransition(.symbolEffect(.replace))
+        }
+    }
+
+    /// 固定按钮标题：显式拆出，避免 String(localized:) 重载与 Button 泛型构造叠加导致类型检查超时
+    private var pinToggleTitle: String {
+        isPinned ? String(localized: "取消固定") : String(localized: "固定到首页")
+    }
+
+    /// 固定按钮图标：显式拆出，同上
+    private var pinToggleImage: String {
+        isPinned ? "pin.fill" : "pin"
+    }
+
+    /// 切换固定状态：从 Button 尾随闭包抽出
+    private func togglePin() {
+        let nowPinned = pinnedStore.toggle(
+            PinnedResource(type: .zone, resourceId: zone.id),
+            accountId: zone.accountId
+        )
+        withAnimation(.smooth) {
+            zone.pinned = nowPinned
+        }
+        SafeCache.perform("pin 状态保存") { try modelContext.save() }
     }
 
     // MARK: - Hero 卡
