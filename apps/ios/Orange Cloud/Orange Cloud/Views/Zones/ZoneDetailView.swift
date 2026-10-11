@@ -172,22 +172,7 @@ struct ZoneDetailView: View {
         .navigationTitle(zone.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
-                // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
-                Button(isPinned ? String(localized: "取消固定") : String(localized: "固定到首页"),
-                       systemImage: isPinned ? "pin.fill" : "pin") {
-                    let nowPinned = pinnedStore.toggle(
-                        PinnedResource(type: .zone, resourceId: zone.id),
-                        accountId: zone.accountId
-                    )
-                    withAnimation(.smooth) {
-                        zone.pinned = nowPinned
-                    }
-                    SafeCache.perform("pin 状态保存") { try modelContext.save() }
-                }
-                .contentTransition(.symbolEffect(.replace))
-            }
+            detailToolbar
         }
         .sensoryFeedback(.impact(weight: .light), trigger: zone.pinned)
         .sensoryFeedback(.success, trigger: actionsViewModel.didPurge)
@@ -559,6 +544,7 @@ struct ZoneDetailView: View {
     }
 
     /// AI 内容控制卡：抽出为独立属性，避免超大 body 触发编译器类型检查超时
+    @ViewBuilder
     private var aiContentControlSection: some View {
     if actionsViewModel.botConfigLoaded || actionsViewModel.aiSettingsAvailable {
         sectionCard(String(localized: "AI 内容控制")) {
@@ -956,6 +942,27 @@ struct ZoneDetailView: View {
             }
             .disabled(actionsViewModel.isPurging)
         }
+    }
+
+    /// 详情页工具栏：抽出为独立属性，避免超大 body 触发编译器类型检查超时
+    @ViewBuilder
+    private var detailToolbar: some ToolbarContent {
+                ToolbarItem(placement: .topBarTrailing) {
+                    // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
+                    // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
+                    Button(isPinned ? String(localized: "取消固定") : String(localized: "固定到首页"),
+                           systemImage: isPinned ? "pin.fill" : "pin") {
+                        let nowPinned = pinnedStore.toggle(
+                            PinnedResource(type: .zone, resourceId: zone.id),
+                            accountId: zone.accountId
+                        )
+                        withAnimation(.smooth) {
+                            zone.pinned = nowPinned
+                        }
+                        SafeCache.perform("pin 状态保存") { try modelContext.save() }
+                    }
+                    .contentTransition(.symbolEffect(.replace))
+                }
     }
 
     // MARK: - Hero 卡
