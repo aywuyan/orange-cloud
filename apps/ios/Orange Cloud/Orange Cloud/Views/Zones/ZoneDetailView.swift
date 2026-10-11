@@ -135,143 +135,7 @@ struct ZoneDetailView: View {
                 // 本卡内 eager 门控行的保留判据：目的页是叶子（内部只开 sheet、不再 push）。
                 // 「规则」「负载均衡」的目的页还要继续 push，已改值式（ZoneRoute + 栈根 navdest）；
                 // 其余若日后加内层 push，必须同步改值式。
-                sectionCard(String(localized: "管理")) {
-                    PermissionGatedNavigationLink(
-                        label: String(localized: "DNS 记录"),
-                        systemImage: "network",
-                        requiredScope: "dns.read",
-                        showsChevron: true
-                    ) {
-                        DNSListView(zoneId: zone.id, zoneName: zone.name, session: session)
-                    }
-                    .listRowStyleValue(String(localized: "\(dnsRecordDisplayCount) 条"))
-
-                    // zone 级 DNS 策略（DNSSEC / CNAME 展平 / NS 类型），与逐条记录分开
-                    PermissionGatedValueLink(
-                        label: String(localized: "DNS 设置"),
-                        systemImage: "gearshape.2",
-                        requiredScope: "zone-dns-settings.read",
-                        tint: .indigo,
-                        showsChevron: true,
-                        value: ZoneRoute.dnsSettings(zoneId: zone.id, zoneName: zone.name)
-                    )
-
-                    ProGatedNavigationLink(
-                        label: String(localized: "WAF 防火墙"),
-                        systemImage: "shield",
-                        requiredScope: "zone-waf.read",
-                        feature: .waf,
-                        tint: .purple,
-                        showsChevron: true
-                    ) {
-                        WAFRuleListView(zoneId: zone.id, zoneName: zone.name, session: session)
-                    }
-
-                    ProGatedNavigationLink(
-                        label: "Rate Limiting",
-                        systemImage: "gauge.with.dots.needle.bottom.50percent",
-                        requiredScope: "zone-waf.read",
-                        feature: .rateLimit,
-                        tint: .pink,
-                        showsChevron: true
-                    ) {
-                        RateLimitRulesView(zoneId: zone.id, zoneName: zone.name, session: session)
-                    }
-
-                    // 规则族（Transform / 缓存 / Snippets / 重定向 / 源站 / 配置 / 压缩 /
-                    // 自定义错误 / Page Rules / URL 规范化）统一收进「规则」二级入口
-                    PermissionGatedValueLink(
-                        label: String(localized: "规则"),
-                        systemImage: "list.bullet.rectangle",
-                        requiredScope: "zone.read",
-                        tint: .orange,
-                        showsChevron: true,
-                        value: ZoneRoute.rulesHub(zoneId: zone.id, zoneName: zone.name)
-                    )
-
-                    ProGatedNavigationLink(
-                        label: "Email Routing",
-                        systemImage: "envelope",
-                        requiredScope: "email-routing-rule.read",
-                        feature: .emailRouting,
-                        tint: .pink,
-                        showsChevron: true
-                    ) {
-                        EmailRoutingView(zoneId: zone.id, zoneName: zone.name, session: session)
-                    }
-
-                    PermissionGatedNavigationLink(
-                        label: "SSL/TLS",
-                        systemImage: "lock.shield",
-                        requiredScope: "zone-settings.read",
-                        tint: .green,
-                        showsChevron: true
-                    ) {
-                        ZoneSSLSettingsView(zoneId: zone.id, zoneName: zone.name, session: session)
-                    }
-
-                    PermissionGatedNavigationLink(
-                        label: String(localized: "性能与缓存"),
-                        systemImage: "speedometer",
-                        requiredScope: "zone-settings.read",
-                        tint: .teal,
-                        showsChevron: true
-                    ) {
-                        ZonePerformanceView(zoneId: zone.id, session: session)
-                    }
-
-                    PermissionGatedNavigationLink(
-                        label: String(localized: "SSL 证书"),
-                        systemImage: "checkmark.seal",
-                        requiredScope: "ssl-and-certificates.read",
-                        tint: .green,
-                        showsChevron: true
-                    ) {
-                        ZoneSSLCertsView(zoneId: zone.id, session: session)
-                    }
-
-                    PermissionGatedNavigationLink(
-                        label: String(localized: "IP 访问规则"),
-                        systemImage: "hand.raised",
-                        requiredScope: "firewall-services.read",
-                        tint: .red,
-                        showsChevron: true
-                    ) {
-                        ZoneAccessRulesView(zoneId: zone.id, session: session)
-                    }
-
-                    // 安全洞察（Security Center Insights）：全套餐免费，读写同 zone-settings.*；
-                    // 目的页是叶子（处理链接外跳浏览器，不再 push），eager 门控行即可
-                    PermissionGatedNavigationLink(
-                        label: String(localized: "安全洞察"),
-                        systemImage: "exclamationmark.shield",
-                        requiredScope: "zone-settings.read",
-                        tint: .red,
-                        showsChevron: true
-                    ) {
-                        SecurityInsightsView(zoneId: zone.id, zoneName: zone.name, session: session)
-                    }
-
-                    // 与负载均衡的监控器不同源：这里监控单个源站，单源站也能用
-                    PermissionGatedValueLink(
-                        label: String(localized: "健康检查"),
-                        systemImage: "waveform.path.ecg",
-                        requiredScope: "healthcheck.read",
-                        tint: .green,
-                        showsChevron: true,
-                        value: ZoneRoute.healthChecks(zoneId: zone.id, zoneName: zone.name)
-                    )
-
-                    ProGatedValueLink(
-                        label: String(localized: "负载均衡"),
-                        systemImage: "arrow.left.arrow.right",
-                        requiredScope: "load-balancers.read",
-                        feature: .loadBalancing,
-                        tint: .pink,
-                        showsChevron: true,
-                        value: ZoneRoute.loadBalancers(zoneId: zone.id, zoneName: zone.name)
-                    )
-                }
+                manageSection
 
                 // 整卡仅在读到任一组配置时出现：
                 // 机器人管控全套餐可用但需 bot-management.read；
@@ -279,117 +143,7 @@ struct ZoneDetailView: View {
                 // 与其给用户一排永远打不开的锁，不如不显示。
                 aiContentControlSection
 
-                sectionCard(String(localized: "操作")) {
-                    settingToggleRow(
-                        title: String(localized: "Under Attack 模式"),
-                        subtitle: String(localized: "对所有访客启用质询页"),
-                        icon: "shield.lefthalf.filled",
-                        tint: .red,
-                        isOn: actionsViewModel.underAttack,
-                        isBusy: actionsViewModel.isTogglingUnderAttack,
-                        canEdit: canEditSettings,
-                        isLoaded: actionsViewModel.settingsLoaded,
-                        deniedScope: canReadSettings ? "zone-settings.write" : "zone-settings.read",
-                        requestToggle: { on in pendingAction = .underAttack(on) }
-                    )
-
-                    precursorRow
-
-                    settingToggleRow(
-                        title: String(localized: "开发模式"),
-                        subtitle: String(localized: "临时绕过缓存（3 小时后自动关闭）"),
-                        icon: "hammer",
-                        tint: .blue,
-                        isOn: actionsViewModel.devMode,
-                        isBusy: actionsViewModel.isTogglingDevMode,
-                        canEdit: canEditSettings,
-                        isLoaded: actionsViewModel.settingsLoaded,
-                        deniedScope: canReadSettings ? "zone-settings.write" : "zone-settings.read",
-                        requestToggle: { on in pendingAction = .devMode(on) }
-                    )
-
-                    // 暂停态一直可读（zone.read 是登录基础权限），故 isLoaded 恒 true：
-                    // 无 zone.write 时行内显示当前开/关而非锁，符合「能看不能改」的一致语义。
-                    settingToggleRow(
-                        title: String(localized: "暂停 Cloudflare"),
-                        subtitle: String(localized: "流量绕过 Cloudflare，仅保留 DNS 解析"),
-                        icon: "pause.circle",
-                        tint: .gray,
-                        isOn: actionsViewModel.paused,
-                        isBusy: actionsViewModel.isTogglingPause,
-                        canEdit: canEditZone,
-                        isLoaded: true,
-                        deniedScope: "zone.write",
-                        requestToggle: { on in pendingAction = .pause(on) }
-                    )
-
-                    Button {
-                        if canPurge {
-                            showPurgeConfirm = true
-                        } else {
-                            deniedScopeHint = "cache.purge"
-                            showActionDenied = true
-                        }
-                    } label: {
-                        HStack(spacing: 12) {
-                            TintIcon(systemImage: "trash", color: .ocOrange)
-                            Text("清理全部缓存")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            if actionsViewModel.isPurging {
-                                ProgressView()
-                            } else if !canPurge {
-                                Image(systemName: "lock.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                    }
-                    .disabled(actionsViewModel.isPurging)
-
-                    // 标记过期（invalidate_cache，2026-09-28 GA）：与清除同权限（cache.purge）、同门槛（免费）
-                    Button {
-                        if canPurge {
-                            showInvalidateConfirm = true
-                        } else {
-                            deniedScopeHint = "cache.purge"
-                            showActionDenied = true
-                        }
-                    } label: {
-                        HStack(spacing: 12) {
-                            TintIcon(systemImage: "clock.arrow.circlepath", color: .ocOrange)
-                            Text("标记过期")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            if !canPurge {
-                                Image(systemName: "lock.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                    }
-                    .disabled(actionsViewModel.isPurging)
-
-                    Button {
-                        if canPurge {
-                            showPurgeSheet = true
-                        } else {
-                            deniedScopeHint = "cache.purge"
-                            showActionDenied = true
-                        }
-                    } label: {
-                        HStack(spacing: 12) {
-                            TintIcon(systemImage: "scissors", color: .ocOrange)
-                            Text("按目标清理缓存")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: canPurge ? "chevron.right" : "lock.fill")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                    .disabled(actionsViewModel.isPurging)
-                }
+                actionsSection
 
                 if !zone.nameServers.isEmpty {
                     sectionCard("Name Servers") {
@@ -946,6 +700,262 @@ struct ZoneDetailView: View {
             }
         }
     }
+    }
+
+    /// 管理卡：抽出为独立属性，避免超大 body 触发编译器类型检查超时
+    private var manageSection: some View {
+        sectionCard(String(localized: "管理")) {
+            PermissionGatedNavigationLink(
+                label: String(localized: "DNS 记录"),
+                systemImage: "network",
+                requiredScope: "dns.read",
+                showsChevron: true
+            ) {
+                DNSListView(zoneId: zone.id, zoneName: zone.name, session: session)
+            }
+            .listRowStyleValue(String(localized: "\(dnsRecordDisplayCount) 条"))
+
+            // zone 级 DNS 策略（DNSSEC / CNAME 展平 / NS 类型），与逐条记录分开
+            PermissionGatedValueLink(
+                label: String(localized: "DNS 设置"),
+                systemImage: "gearshape.2",
+                requiredScope: "zone-dns-settings.read",
+                tint: .indigo,
+                showsChevron: true,
+                value: ZoneRoute.dnsSettings(zoneId: zone.id, zoneName: zone.name)
+            )
+
+            ProGatedNavigationLink(
+                label: String(localized: "WAF 防火墙"),
+                systemImage: "shield",
+                requiredScope: "zone-waf.read",
+                feature: .waf,
+                tint: .purple,
+                showsChevron: true
+            ) {
+                WAFRuleListView(zoneId: zone.id, zoneName: zone.name, session: session)
+            }
+
+            ProGatedNavigationLink(
+                label: "Rate Limiting",
+                systemImage: "gauge.with.dots.needle.bottom.50percent",
+                requiredScope: "zone-waf.read",
+                feature: .rateLimit,
+                tint: .pink,
+                showsChevron: true
+            ) {
+                RateLimitRulesView(zoneId: zone.id, zoneName: zone.name, session: session)
+            }
+
+            // 规则族（Transform / 缓存 / Snippets / 重定向 / 源站 / 配置 / 压缩 /
+            // 自定义错误 / Page Rules / URL 规范化）统一收进「规则」二级入口
+            PermissionGatedValueLink(
+                label: String(localized: "规则"),
+                systemImage: "list.bullet.rectangle",
+                requiredScope: "zone.read",
+                tint: .orange,
+                showsChevron: true,
+                value: ZoneRoute.rulesHub(zoneId: zone.id, zoneName: zone.name)
+            )
+
+            ProGatedNavigationLink(
+                label: "Email Routing",
+                systemImage: "envelope",
+                requiredScope: "email-routing-rule.read",
+                feature: .emailRouting,
+                tint: .pink,
+                showsChevron: true
+            ) {
+                EmailRoutingView(zoneId: zone.id, zoneName: zone.name, session: session)
+            }
+
+            PermissionGatedNavigationLink(
+                label: "SSL/TLS",
+                systemImage: "lock.shield",
+                requiredScope: "zone-settings.read",
+                tint: .green,
+                showsChevron: true
+            ) {
+                ZoneSSLSettingsView(zoneId: zone.id, zoneName: zone.name, session: session)
+            }
+
+            PermissionGatedNavigationLink(
+                label: String(localized: "性能与缓存"),
+                systemImage: "speedometer",
+                requiredScope: "zone-settings.read",
+                tint: .teal,
+                showsChevron: true
+            ) {
+                ZonePerformanceView(zoneId: zone.id, session: session)
+            }
+
+            PermissionGatedNavigationLink(
+                label: String(localized: "SSL 证书"),
+                systemImage: "checkmark.seal",
+                requiredScope: "ssl-and-certificates.read",
+                tint: .green,
+                showsChevron: true
+            ) {
+                ZoneSSLCertsView(zoneId: zone.id, session: session)
+            }
+
+            PermissionGatedNavigationLink(
+                label: String(localized: "IP 访问规则"),
+                systemImage: "hand.raised",
+                requiredScope: "firewall-services.read",
+                tint: .red,
+                showsChevron: true
+            ) {
+                ZoneAccessRulesView(zoneId: zone.id, session: session)
+            }
+
+            // 安全洞察（Security Center Insights）：全套餐免费，读写同 zone-settings.*；
+            // 目的页是叶子（处理链接外跳浏览器，不再 push），eager 门控行即可
+            PermissionGatedNavigationLink(
+                label: String(localized: "安全洞察"),
+                systemImage: "exclamationmark.shield",
+                requiredScope: "zone-settings.read",
+                tint: .red,
+                showsChevron: true
+            ) {
+                SecurityInsightsView(zoneId: zone.id, zoneName: zone.name, session: session)
+            }
+
+            // 与负载均衡的监控器不同源：这里监控单个源站，单源站也能用
+            PermissionGatedValueLink(
+                label: String(localized: "健康检查"),
+                systemImage: "waveform.path.ecg",
+                requiredScope: "healthcheck.read",
+                tint: .green,
+                showsChevron: true,
+                value: ZoneRoute.healthChecks(zoneId: zone.id, zoneName: zone.name)
+            )
+
+            ProGatedValueLink(
+                label: String(localized: "负载均衡"),
+                systemImage: "arrow.left.arrow.right",
+                requiredScope: "load-balancers.read",
+                feature: .loadBalancing,
+                tint: .pink,
+                showsChevron: true,
+                value: ZoneRoute.loadBalancers(zoneId: zone.id, zoneName: zone.name)
+            )
+        }
+    }
+
+    /// 操作卡：抽出为独立属性，避免超大 body 触发编译器类型检查超时
+    private var actionsSection: some View {
+        sectionCard(String(localized: "操作")) {
+            settingToggleRow(
+                title: String(localized: "Under Attack 模式"),
+                subtitle: String(localized: "对所有访客启用质询页"),
+                icon: "shield.lefthalf.filled",
+                tint: .red,
+                isOn: actionsViewModel.underAttack,
+                isBusy: actionsViewModel.isTogglingUnderAttack,
+                canEdit: canEditSettings,
+                isLoaded: actionsViewModel.settingsLoaded,
+                deniedScope: canReadSettings ? "zone-settings.write" : "zone-settings.read",
+                requestToggle: { on in pendingAction = .underAttack(on) }
+            )
+
+            precursorRow
+
+            settingToggleRow(
+                title: String(localized: "开发模式"),
+                subtitle: String(localized: "临时绕过缓存（3 小时后自动关闭）"),
+                icon: "hammer",
+                tint: .blue,
+                isOn: actionsViewModel.devMode,
+                isBusy: actionsViewModel.isTogglingDevMode,
+                canEdit: canEditSettings,
+                isLoaded: actionsViewModel.settingsLoaded,
+                deniedScope: canReadSettings ? "zone-settings.write" : "zone-settings.read",
+                requestToggle: { on in pendingAction = .devMode(on) }
+            )
+
+            // 暂停态一直可读（zone.read 是登录基础权限），故 isLoaded 恒 true：
+            // 无 zone.write 时行内显示当前开/关而非锁，符合「能看不能改」的一致语义。
+            settingToggleRow(
+                title: String(localized: "暂停 Cloudflare"),
+                subtitle: String(localized: "流量绕过 Cloudflare，仅保留 DNS 解析"),
+                icon: "pause.circle",
+                tint: .gray,
+                isOn: actionsViewModel.paused,
+                isBusy: actionsViewModel.isTogglingPause,
+                canEdit: canEditZone,
+                isLoaded: true,
+                deniedScope: "zone.write",
+                requestToggle: { on in pendingAction = .pause(on) }
+            )
+
+            Button {
+                if canPurge {
+                    showPurgeConfirm = true
+                } else {
+                    deniedScopeHint = "cache.purge"
+                    showActionDenied = true
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    TintIcon(systemImage: "trash", color: .ocOrange)
+                    Text("清理全部缓存")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if actionsViewModel.isPurging {
+                        ProgressView()
+                    } else if !canPurge {
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+            .disabled(actionsViewModel.isPurging)
+
+            // 标记过期（invalidate_cache，2026-09-28 GA）：与清除同权限（cache.purge）、同门槛（免费）
+            Button {
+                if canPurge {
+                    showInvalidateConfirm = true
+                } else {
+                    deniedScopeHint = "cache.purge"
+                    showActionDenied = true
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    TintIcon(systemImage: "clock.arrow.circlepath", color: .ocOrange)
+                    Text("标记过期")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if !canPurge {
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+            .disabled(actionsViewModel.isPurging)
+
+            Button {
+                if canPurge {
+                    showPurgeSheet = true
+                } else {
+                    deniedScopeHint = "cache.purge"
+                    showActionDenied = true
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    TintIcon(systemImage: "scissors", color: .ocOrange)
+                    Text("按目标清理缓存")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: canPurge ? "chevron.right" : "lock.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .disabled(actionsViewModel.isPurging)
+        }
     }
 
     // MARK: - Hero 卡
