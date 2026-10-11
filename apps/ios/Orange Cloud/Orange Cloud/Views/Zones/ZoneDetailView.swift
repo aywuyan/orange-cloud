@@ -951,7 +951,6 @@ struct ZoneDetailView: View {
             // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
             // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
             Button(pinToggleTitle, systemImage: pinToggleImage, action: togglePin)
-                .contentTransition(.symbolEffect(.replace))
         }
     }
 
