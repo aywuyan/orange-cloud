@@ -945,7 +945,7 @@ struct ZoneDetailView: View {
     }
 
     /// 详情页工具栏：抽出为独立属性，避免超大 body 触发编译器类型检查超时
-    @ViewBuilder
+    /// 注意：ToolbarItem 是 ToolbarContent 而非 View，这里不能加 @ViewBuilder
     private var detailToolbar: some ToolbarContent {
                 ToolbarItem(placement: .topBarTrailing) {
                     // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
