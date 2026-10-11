@@ -171,9 +171,6 @@ struct ZoneDetailView: View {
         .background { SkyBackground() }
         .navigationTitle(zone.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            detailToolbar
-        }
         .sensoryFeedback(.impact(weight: .light), trigger: zone.pinned)
         .sensoryFeedback(.success, trigger: actionsViewModel.didPurge)
         .sensoryFeedback(.success, trigger: actionsViewModel.didInvalidate)
@@ -944,25 +941,6 @@ struct ZoneDetailView: View {
         }
     }
 
-    /// 详情页工具栏：把 ToolbarContent 独立成专用类型，进一步降低 body 的类型检查压力
-    private var detailToolbar: some ToolbarContent {
-        ZonePinToolbar(
-            title: pinToggleTitle,
-            systemImage: pinToggleImage,
-            action: togglePin
-        )
-    }
-
-    /// 固定按钮标题：显式拆出，避免 String(localized:) 重载与 Toolbar/Label 泛型叠加导致类型检查超时
-    private var pinToggleTitle: String {
-        isPinned ? String(localized: "取消固定") : String(localized: "固定到首页")
-    }
-
-    /// 固定按钮图标：显式拆出，同上
-    private var pinToggleImage: String {
-        isPinned ? "pin.fill" : "pin"
-    }
-
     /// 切换固定状态：从 Button 尾随闭包抽出
     private func togglePin() {
         let nowPinned = pinnedStore.toggle(
@@ -973,21 +951,6 @@ struct ZoneDetailView: View {
             zone.pinned = nowPinned
         }
         SafeCache.perform("pin 状态保存") { try modelContext.save() }
-    }
-
-    /// 详情页工具栏内容：独立类型避免与整个 View 的 body 耦合
-    private struct ZonePinToolbar: ToolbarContent {
-        let title: String
-        let systemImage: String
-        let action: () -> Void
-
-        var body: some ToolbarContent {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: action) {
-                    Label(title, systemImage: systemImage)
-                }
-            }
-        }
     }
 
     // MARK: - Hero 卡
