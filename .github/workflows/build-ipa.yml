@@ -1,0 +1,61 @@
+name: Build unsigned IPA
+
+# 手动触发：在 fork 仓库的 Actions 页面点 "Run workflow"
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26+
+        run: |
+          ls /Applications | grep -i "^Xcode"
+          XCODE=$(ls -d /Applications/Xcode_2*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then
+            XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          fi
+          echo "Using Xcode at: $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      # OPENSOURCE_UNLOCKED：自编译解锁全部 Pro 功能（作者设计意图）
+      - name: Enable OPENSOURCE_UNLOCKED
+        run: |
+          cat > /tmp/unlock.xcconfig <<'EOF'
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) OPENSOURCE_UNLOCKED
+          EOF
+          cat /tmp/unlock.xcconfig
+
+      - name: Build unsigned .app
+        run: |
+          xcodebuild \
+            -project "apps/ios/Orange Cloud/Orange Cloud.xcodeproj" \
+            -scheme "Orange Cloud" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            -xcconfig /tmp/unlock.xcconfig \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -n 1)
+          echo "App bundle: $APP"
+          test -n "$APP"
+          rm -rf Payload && mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry OrangeCloud-unsigned.ipa Payload
+          ls -lh OrangeCloud-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: OrangeCloud-unsigned-ipa
+          path: OrangeCloud-unsigned.ipa
