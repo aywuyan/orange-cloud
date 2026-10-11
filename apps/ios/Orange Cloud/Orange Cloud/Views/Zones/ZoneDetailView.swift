@@ -172,7 +172,16 @@ struct ZoneDetailView: View {
         .navigationTitle(zone.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            detailToolbar
+            ToolbarItem(placement: .topBarTrailing) {
+                // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
+                // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
+                Button(
+                    isPinned ? String(localized: "取消固定") : String(localized: "固定到首页"),
+                    systemImage: isPinned ? "pin.fill" : "pin"
+                ) {
+                    togglePin()
+                }
+            }
         }
         .sensoryFeedback(.impact(weight: .light), trigger: zone.pinned)
         .sensoryFeedback(.success, trigger: actionsViewModel.didPurge)
@@ -942,26 +951,6 @@ struct ZoneDetailView: View {
             }
             .disabled(actionsViewModel.isPurging)
         }
-    }
-
-    /// 详情页工具栏：抽出为独立属性，避免超大 body 触发编译器类型检查超时
-    /// 注意：ToolbarItem 是 ToolbarContent 而非 View，这里不能加 @ViewBuilder
-    private var detailToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            // 置顶以 PinnedResourceStore 为准（跨资源类型统一）；同时把旧的
-            // CachedZone.pinned 字段镜像写回，老数据/其它入口读它时不至于分裂。
-            Button(pinToggleTitle, systemImage: pinToggleImage, action: togglePin)
-        }
-    }
-
-    /// 固定按钮标题：显式拆出，避免 String(localized:) 重载与 Button 泛型构造叠加导致类型检查超时
-    private var pinToggleTitle: String {
-        isPinned ? String(localized: "取消固定") : String(localized: "固定到首页")
-    }
-
-    /// 固定按钮图标：显式拆出，同上
-    private var pinToggleImage: String {
-        isPinned ? "pin.fill" : "pin"
     }
 
     /// 切换固定状态：从 Button 尾随闭包抽出
