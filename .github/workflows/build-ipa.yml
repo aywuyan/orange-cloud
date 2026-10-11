@@ -27,6 +27,7 @@ jobs:
         run: |
           cat > /tmp/unlock.xcconfig <<'EOF'
           SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) OPENSOURCE_UNLOCKED
+OTHER_SWIFT_FLAGS = $(inherited) -Xfrontend -solver-expression-time-threshold=600 -Xfrontend -solver-scope-threshold=10000000 -Xfrontend -solver-trail-threshold=640000000
 // 放宽 Swift 类型求解器阈值：CI 机器上部分复杂表达式会误报超时（本地可过）
 OTHER_SWIFT_FLAGS = $(inherited) -Xfrontend -solver-expression-time-threshold=600 -Xfrontend -solver-scope-threshold=10000000 -Xfrontend -solver-trail-threshold=640000000
           EOF
