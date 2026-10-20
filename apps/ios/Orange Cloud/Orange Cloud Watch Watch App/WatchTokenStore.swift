@@ -13,8 +13,8 @@ import Security
 nonisolated enum WatchTokenStore {
 
     private static let service = "app.orangecloud.oauth"
-    /// 与 iPhone TokenStore.sharedAccessGroup 一致；watch 本机的同名共享组
-    private static let accessGroup = "6G78MMY657.jiamin.chen.orange-cloud.shared"
+    /// 与 iPhone TokenStore.sharedAccessGroup 一致（由 xcconfig 注入）；nil = 系统默认组
+    private static let accessGroup = BuildConfig.keychainGroup
 
     /// SharedAuth 解码的最小结构（多余字段会被 Codable 忽略，故与 StoredToken 兼容）
     private struct SharedToken: Codable {
@@ -34,13 +34,19 @@ nonisolated enum WatchTokenStore {
             kSecAttrService as String: service,
             kSecAttrAccount as String: sessionId,
         ]
-        SecItemDelete(base as CFDictionary)
+        var deleteQuery = base
+        if let group = accessGroup {
+            deleteQuery[kSecAttrAccessGroup as String] = group
+        }
+        SecItemDelete(deleteQuery as CFDictionary)
 
         var add = base
         add[kSecValueData as String]      = data
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        add[kSecAttrAccessGroup as String] = accessGroup
-        if SecItemAdd(add as CFDictionary, nil) != errSecSuccess {
+        if let group = accessGroup {
+            add[kSecAttrAccessGroup as String] = group
+        }
+        if SecItemAdd(add as CFDictionary, nil) != errSecSuccess, accessGroup != nil {
             // entitlement 缺失时回退默认组，保证 token 不丢
             add.removeValue(forKey: kSecAttrAccessGroup as String)
             SecItemAdd(add as CFDictionary, nil)

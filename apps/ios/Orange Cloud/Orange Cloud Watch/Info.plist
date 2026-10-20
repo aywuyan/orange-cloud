@@ -7,5 +7,9 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<key>OCAppGroup</key>
+	<string>$(OC_APP_GROUP)</string>
+	<key>OCKeychainGroup</key>
+	<string>$(OC_KEYCHAIN_GROUP)</string>
 </dict>
 </plist>

@@ -17,7 +17,8 @@ nonisolated struct WidgetSnapshot: Codable, Sendable {
     var activeZones: Int
     var updatedAt:   Date
 
-    static let appGroupID = "group.jiamin.chen.Orange-Cloud"
+    /// 共享容器 ID：自编译由 xcconfig 的 OC_APP_GROUP 注入（见 Shared/BuildConfig.swift）
+    static let appGroupID = BuildConfig.appGroupID
     private static let legacyKey  = "widgetSnapshot"
     private static let byAccountKey = "widgetOverviewByAccount"
     static let currentAccountKey = "currentAccountId"

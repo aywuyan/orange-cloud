@@ -1,0 +1,36 @@
+//
+//  SelfBuild.xcconfig
+//
+//  自编译（self-build）构建配置。用法：
+//      xcodebuild ... -xcconfig "apps/ios/SelfBuild.xcconfig"
+//  或把它设为 Xcode 工程 / target 的 Configuration File。
+//
+//  这里的 OC_* 会经 Info.plist 展开，运行时由 BuildConfig
+//  （Shared/、Orange Cloud File/、notification/ 各一份）读取；
+//  不传入本文件时，代码回退到上游仓库的默认值。
+//
+
+// ── 功能开关 ────────────────────────────────────────────────
+// 解锁全部 Pro 功能（作者设计意图，见 CONTRIBUTING.md）
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) OPENSOURCE_UNLOCKED
+
+// 放宽 Swift 类型检查器阈值：CI 上的新编译器在复杂 View 表达式上容易超时
+OTHER_SWIFT_FLAGS = $(inherited) -Xfrontend -solver-expression-time-threshold=600 -Xfrontend -solver-scope-threshold=10000000 -Xfrontend -solver-trail-threshold=640000000
+
+// ── 跨进程共享 ──────────────────────────────────────────────
+// 必须在签名时一并注入主 App 与各扩展的 entitlements，否则小组件/文件扩展读不到数据。
+// 这里的 ID 必须来自你自己（或你所用证书）已授权的 App Group。
+OC_APP_GROUP = group.748ce2c0c9955efa.1
+
+// 共享钥匙串组。留空 = 用系统默认组（推荐先留空：签名工具注入的 entitlements
+// 只要让主 App 与 Widget 落在同一个默认组，token 就能共享）。
+// 需要显式指定时，填一个已被 keychain-access-groups 授权的组，例如：
+// OC_KEYCHAIN_GROUP = PXUQAP33T8.orangecloud.shared
+OC_KEYCHAIN_GROUP =
+
+// ── Cloudflare OAuth（自建 Client + 回调中转）────────────────
+// 见 CONTRIBUTING.md 与 apps/web/README.md；redirect_uri 必须与 Dashboard 注册值完全一致。
+OC_OAUTH_CLIENT_ID = 4b65e8313b18569e6cd0410d29747ded
+
+// 注意：xcconfig 里的 `//` 会被当成注释，因此 URL 中的 // 用 $() 拆开
+OC_OAUTH_REDIRECT_URI = https:/$()/orangecloud-oauth-relay.aywuyan.workers.dev/oauth/callback

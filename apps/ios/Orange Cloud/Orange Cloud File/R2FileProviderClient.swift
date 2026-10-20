@@ -23,8 +23,8 @@ actor R2FileProviderClient {
     static let maxUploadBytes = 300 * 1024 * 1024
 
     private static let keychainService = "app.orangecloud.oauth"
-    private static let keychainAccessGroup = "6G78MMY657.jiamin.chen.orange-cloud.shared"
-    private static let oauthClientID = "102240eb9095a1965ee11813ef4788cd"
+    private static let keychainAccessGroup = BuildConfig.keychainGroup
+    private static let oauthClientID = BuildConfig.oauthClientID
     private static let oauthTokenURL = URL(string: "https://dash.cloudflare.com/oauth2/token")!
     private let apiBase = URL(string: "https://api.cloudflare.com/client/v4")!
 
@@ -341,14 +341,16 @@ actor R2FileProviderClient {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.keychainService,
             kSecAttrAccount as String: credentials.sessionId.uuidString,
-            kSecAttrAccessGroup as String: Self.keychainAccessGroup,
             kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
+        if let group = Self.keychainAccessGroup {
+            query[kSecAttrAccessGroup as String] = group
+        }
         var item: CFTypeRef?
         var status = SecItemCopyMatching(query as CFDictionary, &item)
-        if status != errSecSuccess {
+        if status != errSecSuccess, Self.keychainAccessGroup != nil {
             // 回退：无 access-group 限定再试一次（容错 entitlement 差异）
             query.removeValue(forKey: kSecAttrAccessGroup as String)
             status = SecItemCopyMatching(query as CFDictionary, &item)
@@ -372,8 +374,10 @@ actor R2FileProviderClient {
         addQuery[kSecValueData as String] = data
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         addQuery[kSecAttrSynchronizable as String] = false
-        addQuery[kSecAttrAccessGroup as String] = Self.keychainAccessGroup
-        if SecItemAdd(addQuery as CFDictionary, nil) != errSecSuccess {
+        if let group = Self.keychainAccessGroup {
+            addQuery[kSecAttrAccessGroup as String] = group
+        }
+        if SecItemAdd(addQuery as CFDictionary, nil) != errSecSuccess, Self.keychainAccessGroup != nil {
             addQuery.removeValue(forKey: kSecAttrAccessGroup as String)
             SecItemAdd(addQuery as CFDictionary, nil)
         }

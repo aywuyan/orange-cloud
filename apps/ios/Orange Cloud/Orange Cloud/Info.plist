@@ -26,5 +26,14 @@
 		<string>fetch</string>
 		<string>processing</string>
 	</array>
+	<!-- 自编译配置：由 xcconfig 注入，运行时经 Shared/BuildConfig.swift 读取 -->
+	<key>OCAppGroup</key>
+	<string>$(OC_APP_GROUP)</string>
+	<key>OCKeychainGroup</key>
+	<string>$(OC_KEYCHAIN_GROUP)</string>
+	<key>OCOAuthClientID</key>
+	<string>$(OC_OAUTH_CLIENT_ID)</string>
+	<key>OCOAuthRedirectURI</key>
+	<string>$(OC_OAUTH_REDIRECT_URI)</string>
 </dict>
 </plist>

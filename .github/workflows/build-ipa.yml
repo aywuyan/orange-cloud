@@ -22,14 +22,10 @@ jobs:
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
 
-      # OPENSOURCE_UNLOCKED：自编译解锁全部 Pro 功能（作者设计意图）
-      - name: Enable OPENSOURCE_UNLOCKED
-        run: |
-          cat > /tmp/unlock.xcconfig <<'EOF'
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) OPENSOURCE_UNLOCKED
-          OTHER_SWIFT_FLAGS = $(inherited) -Xfrontend -solver-expression-time-threshold=600 -Xfrontend -solver-scope-threshold=10000000 -Xfrontend -solver-trail-threshold=640000000
-          EOF
-          cat /tmp/unlock.xcconfig
+      # 构建配置在仓库里：apps/ios/SelfBuild.xcconfig
+      # （OPENSOURCE_UNLOCKED + Swift solver 阈值 + OC_* 自编译配置）
+      - name: Show self-build config
+        run: cat "apps/ios/SelfBuild.xcconfig"
 
       - name: Build unsigned .app
         run: |
@@ -39,7 +35,7 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
-            -xcconfig /tmp/unlock.xcconfig \
+            -xcconfig "apps/ios/SelfBuild.xcconfig" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \

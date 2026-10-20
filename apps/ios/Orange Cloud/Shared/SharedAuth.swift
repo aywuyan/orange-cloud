@@ -29,7 +29,7 @@ nonisolated enum SharedAuth {
     /// 指定身份的有效 access_token（Widget 固定某账号时取其所属身份的 token）；
     /// 不存在或已过期（含 60s 余量）返回 nil。只读，绝不刷新。
     static func validAccessToken(sessionId: String) -> String? {
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String:              kSecClassGenericPassword,
             kSecAttrService as String:        service,
             kSecAttrAccount as String:        sessionId,
@@ -37,7 +37,11 @@ nonisolated enum SharedAuth {
             kSecReturnData as String:         true,
             kSecMatchLimit as String:         kSecMatchLimitOne,
         ]
-        // 不指定 access group：自动匹配本目标可访问的组（含共享组）
+        // 配了共享组就显式指定；没配则用系统默认组（主 App 与 Widget 的默认组是否相同，
+        // 取决于签名时注入的 entitlements，不再依赖“默认组恰好等于共享组”的隐含前提）
+        if let group = BuildConfig.keychainGroup {
+            query[kSecAttrAccessGroup as String] = group
+        }
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
               let data = item as? Data,

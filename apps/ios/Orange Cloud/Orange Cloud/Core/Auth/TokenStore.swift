@@ -21,8 +21,10 @@ nonisolated enum TokenStore {
     private static let service = "app.orangecloud.oauth"
     private static let legacyAccount = "default"
 
-    /// 共享钥匙串组（主 App 与 Widget 共用；Widget 只读 access_token，不做刷新）
-    static let sharedAccessGroup = "6G78MMY657.jiamin.chen.orange-cloud.shared"
+    /// 共享钥匙串组（主 App 与 Widget 共用；Widget 只读 access_token，不做刷新）。
+    /// 自编译由 xcconfig 的 OC_KEYCHAIN_GROUP 注入；未配置时为 nil，用系统默认组——
+    /// 签名注入的 entitlements 若让主 App 与扩展落在同一个默认组，共享同样成立。
+    static let sharedAccessGroup = BuildConfig.keychainGroup
 
     // MARK: - 按身份读写
 
@@ -60,7 +62,6 @@ nonisolated enum TokenStore {
         // 更新成功即返回；历史遗留的可同步条目等形态仍走下面的删后加归一。
         var updateQuery = baseQuery(account: account)
         updateQuery[kSecAttrSynchronizable as String] = false
-        updateQuery[kSecAttrAccessGroup as String] = sharedAccessGroup
         let updateAttrs: [String: Any] = [kSecValueData as String: data]
         if SecItemUpdate(updateQuery as CFDictionary, updateAttrs as CFDictionary) == errSecSuccess {
             return true
@@ -75,11 +76,14 @@ nonisolated enum TokenStore {
         // token 仅按设备本地保管，绝不随 iCloud 钥匙串跨设备同步
         // （OAuth 刷新令牌每次轮换，同步旧令牌会导致并发刷新互相作废而误登出）
         query[kSecAttrSynchronizable as String] = false
-        // 写入共享组让 Widget 可读；entitlement 缺失时回退默认组，保证 token 不丢
-        query[kSecAttrAccessGroup as String] = sharedAccessGroup
         let sharedStatus = SecItemAdd(query as CFDictionary, nil)
         if sharedStatus == errSecSuccess {
             return true
+        }
+        // 没配共享组 = 刚才写的就是系统默认组，没有可回退的目标，直接算失败
+        guard sharedAccessGroup != nil else {
+            AppLog.auth.error("keychain token save FAILED account=\(account) status=\(sharedStatus)")
+            return false
         }
         query.removeValue(forKey: kSecAttrAccessGroup as String)
         let fallbackStatus = SecItemAdd(query as CFDictionary, nil)
@@ -103,11 +107,16 @@ nonisolated enum TokenStore {
     }
 
     private static func baseQuery(account: String) -> [String: Any] {
-        [
+        var query: [String: Any] = [
             kSecClass as String:       kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+        // 配了共享组时，读写删都带上它——否则只会命中系统默认组，找不到自己写进去的条目
+        if let group = sharedAccessGroup {
+            query[kSecAttrAccessGroup as String] = group
+        }
+        return query
     }
 
     /// 读/删用：同时匹配本机与可同步条目

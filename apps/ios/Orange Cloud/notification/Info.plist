@@ -9,5 +9,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).NotificationService</string>
 	</dict>
+	<key>OCAppGroup</key>
+	<string>$(OC_APP_GROUP)</string>
 </dict>
 </plist>
